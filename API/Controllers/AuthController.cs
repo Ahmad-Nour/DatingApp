@@ -6,14 +6,12 @@ using System.Threading.Tasks;
 using API.Dtos;
 using API.Interfaces;
 using API.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Controllers
 {
-    [Authorize]
     public class AuthController : BaseController
     {
         private readonly IAuthRepository _authRepository;
