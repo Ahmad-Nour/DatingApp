@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using API.Dtos;
+using API.Helpers;
 using API.Interfaces;
-using API.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,12 +23,18 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUsers()
+        public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
         {
-            var users = await _datingRepository.GetUsers();
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var user = await _datingRepository.GetUser(userId);
+            if (string.IsNullOrEmpty(userParams.Gender))
+                userParams.Gender = user.Gender == "female" ? "male" : "female";
+            userParams.UserId = userId;
+
+            var users = await _datingRepository.GetUsers(userParams);
+
             if (users == null) return NotFound();
             var usersTOReturn = _mapper.Map<IReadOnlyList<UserForListDto>>(users);
-
             return Ok(usersTOReturn);
         }
 
@@ -49,12 +55,13 @@ namespace API.Controllers
                 return Unauthorized();
             var user = await _datingRepository.GetUser(id);
             if (user == null) return BadRequest();
+
             _mapper.Map<UserForUpdateDto>(user);
             if (await _datingRepository.SaveAll())
             {
                 return NoContent();
             }
-            return BadRequest("Something wrond when add user with id: {id}");
+            return BadRequest("Something wrong when add user with id: {id}");
         }
 
     }
