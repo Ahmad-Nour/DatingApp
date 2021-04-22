@@ -12,6 +12,7 @@ namespace API.Data
     public class DatingRepository : IDatingRepository
     {
         private readonly DataContext _context;
+
         public DatingRepository(DataContext context)
         {
             _context = context;
@@ -26,6 +27,7 @@ namespace API.Data
         {
             _context.Remove(entity);
         }
+
 
         public async Task<Photo> GetMainPhotoForUser(int userId)
         {
@@ -49,11 +51,24 @@ namespace API.Data
 
         public async Task<PagedList<User>> GetUsers(UserParams userParams)
         {
+
             var users = _context.Users.Include(p => p.Photos)
                 .OrderByDescending(x => x.LastActive).AsQueryable();
 
             users = users.Where(x => x.Gender == userParams.Gender);
             users = users.Where(x => x.Id != userParams.UserId);
+
+            if (userParams.Likers)
+            {
+                var userLiker = await GetLikeForFilter(userParams.Likers, userParams.UserId);
+                users = users.Where(u => userLiker.Contains(u.Id));
+            }
+
+            if (userParams.Likees)
+            {
+                var userLikee = await GetLikeForFilter(userParams.Likers, userParams.UserId);
+                users = users.Where(u => userLikee.Contains(u.Id));
+            }
 
             if (userParams.MaxAge != 78 || userParams.MinAge != 18)
             {
@@ -76,13 +91,51 @@ namespace API.Data
                 }
             }
 
+
             return await PagedList<User>.CreateAsync(users, userParams.PageNumber, userParams.PageSize);
         }
+        public async Task<Like> GetLike(int id, int recipientId)
+        {
+            return await _context.Likes.FirstOrDefaultAsync(like => like.LikerId == id &&
+                like.LikeeId == recipientId);
+        }
+
 
         public async Task<bool> SaveAll()
         {
             return await _context.SaveChangesAsync() > 0;
         }
+
+        private async Task<List<int>> GetLikeForFilter(bool liker, int id)
+        {
+            var user = await _context.Users
+                .Include(x => x.Likers)
+                .Include(x => x.Likees)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+
+            List<int> data = new List<int>();
+            if (liker)
+            {
+                foreach (var item in user.Likers)
+                {
+                    if (item.LikeeId == id)
+                        data.Add(item.LikerId);
+                }
+                return data;
+            }
+            else
+            {
+                foreach (var item in user.Likers)
+                {
+                    if (item.LikerId == id)
+                        data.Add(item.LikeeId);
+                }
+                return data;
+            }
+        }
+
+
 
     }
 }

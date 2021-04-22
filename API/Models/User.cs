@@ -20,5 +20,7 @@ namespace API.Models
         public DateTime CreatedAccount { get; set; }
         public DateTime LastActive { get; set; }
         public ICollection<Photo> Photos { get; set; }
+        public ICollection<Like> Likees { get; set; }
+        public ICollection<Like> Likers { get; set; }
     }
 }
