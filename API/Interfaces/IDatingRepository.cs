@@ -15,5 +15,8 @@ namespace API.Interfaces
         public Task<Photo> GetPhoto(int id);
         public Task<Photo> GetMainPhotoForUser(int userId);
         public Task<Like> GetLike(int id, int recipientId);
+        public Task<Message> GetMessage(int id);
+        public Task<PagedList<Message>> GetMessagesForUser(MessageParams messageParams);
+        public Task<IEnumerable<Message>> GetMessagesThread(int userId, int recipientId);
     }
 }
